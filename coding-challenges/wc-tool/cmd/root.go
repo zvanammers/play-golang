@@ -25,52 +25,21 @@ const (
 )
 
 func countBytes(text []byte) int {
-	// data, errReadFile := os.ReadFile(fileName)
-
-	// if errReadFile != nil {
-	// 	fmt.Printf("Error: %s\n", errReadFile)
-	// 	os.Exit(1)
-	// }
-
-	// fmt.Printf("%d %s\n", len(data), fileName)
 	return len(text)
 }
 
 func countChars(text []byte) int {
-	// data, errReadFile := os.ReadFile(fileName)
-
-	// if errReadFile != nil {
-	// 	fmt.Printf("Error: %s\n", errReadFile)
-	// 	os.Exit(1)
-	// }
-
-	// fmt.Printf("%d %s\n", utf8.RuneCountInString(string(data)), fileName)
 	return utf8.RuneCountInString(string(text))
 }
 
 func countLines(textSource []byte) int {
-	// data, errReadFile := os.ReadFile(fileName)
-
-	// if errReadFile != nil {
-	// 	fmt.Printf("Error: %s\n", errReadFile)
-	// 	os.Exit(1)
-	// }
-
 	text := string(textSource)
 
 	lines := strings.Split(text, "\n")
-	// fmt.Printf("%d %s\n", len(lines), fileName)
 	return len(lines)
 }
 
 func countWords(text []byte) int {
-	// data, errReadFile := os.ReadFile(fileName)
-
-	// if errReadFile != nil {
-	// 	fmt.Printf("Error: %s\n", errReadFile)
-	// 	os.Exit(1)
-	// }
-
 	processed := []byte{}
 	for _, r := range text {
 		if unicode.IsSpace(rune(r)) {
@@ -95,8 +64,6 @@ func countWords(text []byte) int {
 func getFileName(reader io.Reader, args []string, bytesFile string, charsFile string, linesFile string, wordsFile string) (text []byte, thingToCount ThingToCount, file string) {
 	fileName := ""
 	thingToCount = bytes
-	fmt.Printf("%s, %s, %s, %s\n", bytesFile, charsFile, linesFile, wordsFile)
-	fmt.Println(args)
 	if len(args) == 0 && (bytesFile != "" || charsFile != "" || linesFile != "" || wordsFile != "") {
 		if bytesFile != "" {
 			fileName = bytesFile
@@ -175,36 +142,6 @@ var rootCmd = &cobra.Command{
 			os.Exit(0)
 		}
 		fmt.Printf("%d %s\n", num, fileName)
-		// if fileToCountBytes != "None" || fileToCountChars != "None" || fileToCountLines != "None" || fileToCountWords != "None" {
-		// 	if fileToCountBytes != "None" {
-		// 		fileName = fileToCountBytes
-		// 		num = countBytes(fileToCountBytes)
-		// 	} else if fileToCountChars != "None" {
-		// 		fileName = fileToCountChars
-		// 		num = countChars(fileToCountChars)
-		// 	} else if fileToCountLines != "None" {
-		// 		fileName = fileToCountLines
-		// 		num = countLines(fileToCountLines)
-		// 	} else if fileToCountWords != "None" {
-		// 		fileName = fileToCountWords
-		// 		num = countWords(fileToCountWords)
-		// 	}
-		// 	fmt.Printf("%d %s\n", num, fileName)
-		// } else if len(args) > 0 {
-		// 	bytes := countBytes(args[0])
-		// 	lines := countLines(args[0])
-		// 	words := countWords(args[0])
-		// 	fmt.Printf("%d %d %d %s\n", lines, words, bytes, args[0])
-		// } else {
-		// 	var inputReader io.Reader = cmd.InOrStdin()
-		// 	// output := []byte{}
-		// 	var output, err = io.ReadAll(inputReader)
-		// 	if err != nil {
-		// 		fmt.Println(err)
-		// 		os.Exit(1)
-		// 	}
-		// 	fmt.Printf("%s\n", output)
-		// }
 	},
 }
 
