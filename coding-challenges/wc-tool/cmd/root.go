@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 type ThingToCount int
@@ -23,6 +24,8 @@ const (
 	lines
 	all
 )
+
+const ARG_FLAG = "ARG_FLAG"
 
 func countBytes(text []byte) int {
 	return len(text)
@@ -62,25 +65,36 @@ func countWords(text []byte) int {
 }
 
 func getFileName(reader io.Reader, args []string, bytesFile string, charsFile string, linesFile string, wordsFile string) (text []byte, thingToCount ThingToCount, file string) {
-	fileName := ""
+
+	if term.IsTerminal(int(os.Stdin.Fd())) && len(args) == 0 && (bytesFile == ARG_FLAG || charsFile == ARG_FLAG || linesFile == ARG_FLAG || wordsFile == ARG_FLAG) {
+		fmt.Println("Error: Cannot provide flag, but no file or stdin")
+		os.Exit(1)
+	} else if term.IsTerminal(int(os.Stdin.Fd())) && len(args) == 0 {
+		fmt.Println("Error: Must provide stdin or file")
+		os.Exit(1)
+	}
+
 	thingToCount = bytes
-	if len(args) == 0 && (bytesFile != "" || charsFile != "" || linesFile != "" || wordsFile != "") {
-		if bytesFile != "" {
-			fileName = bytesFile
-		} else if charsFile != "" {
-			fileName = charsFile
-			thingToCount = runes
-		} else if linesFile != "" {
-			fileName = linesFile
-			thingToCount = lines
-		} else if wordsFile != "" {
-			fileName = wordsFile
-			thingToCount = words
-		}
+
+	if charsFile != "" {
+		thingToCount = runes
+	} else if linesFile != "" {
+		thingToCount = lines
+	} else if wordsFile != "" {
+		thingToCount = words
+	} else if bytesFile != "" {
+		thingToCount = bytes
+	} else {
+		thingToCount = all
+	}
+
+	// file is provided
+	if len(args) == 1 && (bytesFile == ARG_FLAG || charsFile == ARG_FLAG || linesFile == ARG_FLAG || wordsFile == ARG_FLAG) {
+		fileName := args[0]
 		text, errReadFile := os.ReadFile(fileName)
 
 		if errReadFile != nil {
-			fmt.Printf("Error: %s\n", errReadFile)
+			fmt.Printf("Error when reading file with flag: %s\n", errReadFile)
 			os.Exit(1)
 		}
 		return text, thingToCount, fileName
@@ -88,25 +102,23 @@ func getFileName(reader io.Reader, args []string, bytesFile string, charsFile st
 		text, errReadFile := os.ReadFile(args[0])
 
 		if errReadFile != nil {
-			fmt.Printf("Error: %s\n", errReadFile)
+			fmt.Printf("Error when reading file with no flags provided: %s\n", errReadFile)
 			os.Exit(1)
 		}
-		return text, all, fileName
+		return text, all, args[0]
+	} else if len(args) > 1 {
+		fmt.Println("Cannot provide more than one file")
+		os.Exit(1)
 	}
+
+	// std input
 	text, err := io.ReadAll(reader)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	if bytesFile == "stdin" {
-		return text, bytes, ""
-	} else if charsFile == "stdin" {
-		return text, runes, ""
-	} else if wordsFile == "stdin" {
-		return text, words, ""
-	}
-	return text, lines, ""
+	return text, thingToCount, ""
 }
 
 var fileToCountBytes string
@@ -135,12 +147,13 @@ var rootCmd = &cobra.Command{
 		} else if thingToCount == lines {
 			num = countLines(text)
 		} else if thingToCount == all {
-			bytes := countBytes(text)
-			lines := countLines(text)
-			words := countWords(text)
-			fmt.Printf("%d %d %d %s\n", lines, words, bytes, args[0])
+			byteCount := countChars(text)
+			lineCount := countLines(text)
+			wordCount := countWords(text)
+			fmt.Printf("%d %d %d %s\n", lineCount, wordCount, byteCount, fileName)
 			os.Exit(0)
 		}
+
 		fmt.Printf("%d %s\n", num, fileName)
 	},
 }
@@ -167,8 +180,8 @@ func init() {
 	rootCmd.Flags().StringVarP(&fileToCountChars, "m", "m", "", "Provide file to calculate number of chars")
 	rootCmd.Flags().StringVarP(&fileToCountLines, "l", "l", "", "Provide file to calculate number of lines")
 	rootCmd.Flags().StringVarP(&fileToCountWords, "w", "w", "", "Provide file to calculate number of words")
-	// rootCmd.Flags().Lookup("c").NoOptDefVal = "stdin"
-	// rootCmd.Flags().Lookup("m").NoOptDefVal = "stdin"
-	// rootCmd.Flags().Lookup("l").NoOptDefVal = "stdin"
-	// rootCmd.Flags().Lookup("w").NoOptDefVal = "stdin"
+	rootCmd.Flags().Lookup("c").NoOptDefVal = ARG_FLAG
+	rootCmd.Flags().Lookup("m").NoOptDefVal = ARG_FLAG
+	rootCmd.Flags().Lookup("l").NoOptDefVal = ARG_FLAG
+	rootCmd.Flags().Lookup("w").NoOptDefVal = ARG_FLAG
 }
